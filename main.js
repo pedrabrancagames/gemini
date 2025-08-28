@@ -240,14 +240,14 @@ function spawnGhost(userCoords) {
 
     // O componente gps-entity-place no A-Frame cuidará do posicionamento baseado em GPS.
     // Apenas definimos as coordenadas GPS e a altura (y).
-    const y = 1.5; // Altura fixa acima do chão
+    const y = 0.8; // Altura fixa acima do chão
 
     ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostSpawnGPS.latitude}; longitude: ${ghostSpawnGPS.longitude};`);
     ghostEntity.setAttribute('position', `0 ${y} 0`); // Define a posição local para a altura, gps-entity-place ajustará o resto.
     ghostEntity.setAttribute('visible', 'true');
     isGhostSpawned = true;
     messageContainer.textContent = `Fantasma a ${Math.round(randomDistance)} metros!`;
-    console.log(`Fantasma gerado em: x ${x.toFixed(2)}, y ${y.toFixed(2)}, z ${z.toFixed(2)} (GPS: lat ${ghostSpawnGPS.latitude.toFixed(6)}, lon ${ghostSpawnGPS.longitude.toFixed(6)})`);
+    console.log(`Fantasma gerado em: y ${y.toFixed(2)} (GPS: lat ${ghostSpawnGPS.latitude.toFixed(6)}, lon ${ghostSpawnGPS.longitude.toFixed(6)})`);
 }
 
 function locationError(error) {
