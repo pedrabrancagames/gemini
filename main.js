@@ -21,19 +21,14 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 const testLocation = {
-    latitude: -27.630914842968245,
-    longitude: -48.67979172336716,
+    latitude: -27.63979808217616,
+    longitude: -48.66775914489331,
     radius: 100 // metros
-};
-
-// Localização alvo do fantasma (aleatória dentro da área de teste para simulação)
-const ghostTargetLocation = {
-    latitude: testLocation.latitude + (Math.random() - 0.5) * 0.0005, 
-    longitude: testLocation.longitude + (Math.random() - 0.5) * 0.0005
 };
 
 let locationWatchId = null;
 let isGhostSpawned = false;
+let currentGhostGPS = null; // Armazena a localização GPS do fantasma gerado
 
 // --- Elementos da UI ---
 const googleLoginBtn = document.getElementById('google-login');
@@ -147,32 +142,36 @@ function handleLocationUpdate(position) {
         longitude: position.coords.longitude
     };
 
-    const distance = haversineDistance(userCoords, testLocation);
+    const distanceToHuntingArea = haversineDistance(userCoords, testLocation);
 
-    if (distance <= testLocation.radius) {
-        // Dentro do raio
+    if (distanceToHuntingArea <= testLocation.radius) {
+        // Dentro do raio de caça
         protonPackUI.classList.remove('hidden');
         beamBtn.classList.remove('hidden');
         pkeMeterUI.classList.add('hidden');
-        messageContainer.textContent = "Você está na área de caça!";
-
-        // Lógica de spawn de fantasmas
+        
         if (!isGhostSpawned) {
             spawnGhost(userCoords);
+        } else if (currentGhostGPS) { // Se o fantasma já foi gerado, mostra a distância até ele
+            const distanceToGhost = haversineDistance(userCoords, currentGhostGPS);
+            messageContainer.textContent = `Fantasma a ${Math.round(distanceToGhost)} metros!`;
+        } else {
+            messageContainer.textContent = "Você está na área de caça!";
         }
 
     } else {
-        // Fora do raio
+        // Fora do raio de caça
         protonPackUI.classList.add('hidden');
         beamBtn.classList.add('hidden');
         pkeMeterUI.classList.remove('hidden');
-        messageContainer.textContent = `Você está a ${Math.round(distance)} metros da área de caça. Siga o medidor!`;
+        messageContainer.textContent = `Você está a ${Math.round(distanceToHuntingArea)} metros da área de caça. Siga o medidor!`;
         outsideRadiusAudio.play().catch(e => console.log("Áudio bloqueado pelo navegador."));
         
         // Esconde o fantasma se o jogador sair da área
         if(isGhostSpawned) {
             ghostEntity.setAttribute('visible', 'false');
             isGhostSpawned = false;
+            currentGhostGPS = null;
         }
     }
 }
@@ -180,8 +179,13 @@ function handleLocationUpdate(position) {
 function spawnGhost(userCoords) {
     console.log("Gerando fantasma em WebXR...");
 
-    const distanceToGhost = haversineDistance(userCoords, ghostTargetLocation);
-    const bearingToGhost = getBearing(userCoords, ghostTargetLocation);
+    const spawnRadius = 10; // Raio de 5 a 10m do jogador para teste
+    const minSpawnDistance = 5; // Distância mínima para não spawnar em cima do jogador
+    const randomDistance = minSpawnDistance + (Math.random() * (spawnRadius - minSpawnDistance));
+    const randomAngle = Math.random() * 360; // Ângulo aleatório
+
+    const ghostSpawnGPS = calculateDestinationPoint(userCoords, randomAngle, randomDistance);
+    currentGhostGPS = ghostSpawnGPS; // Armazena a localização GPS do fantasma
 
     // Converte coordenadas polares (distância, bearing) para Cartesianas (x, z)
     // No A-Frame/Three.js, +X é direita, +Z é para frente (longe da câmera), -Z é para trás (em direção à câmera)
@@ -193,17 +197,17 @@ function spawnGhost(userCoords) {
     // Oeste (270 deg) -> -X
 
     // Ajusta o ângulo para o sistema de coordenadas do A-Frame (Norte é -Z)
-    const angleRad = (90 - bearingToGhost) * Math.PI / 180; // 90 - bearing para alinhar Norte com -Z e Leste com +X
+    const angleRad = (90 - randomAngle) * Math.PI / 180; // 90 - bearing para alinhar Norte com -Z e Leste com +X
 
-    const x = distanceToGhost * Math.cos(angleRad);
-    const z = distanceToGhost * Math.sin(angleRad);
+    const x = randomDistance * Math.cos(angleRad);
+    const z = randomDistance * Math.sin(angleRad);
     const y = 1.5; // Altura fixa acima do chão
 
     ghostEntity.setAttribute('position', `${x} ${y} ${z}`);
     ghostEntity.setAttribute('visible', 'true');
     isGhostSpawned = true;
-    messageContainer.textContent = "Um fantasma apareceu!";
-    console.log(`Fantasma gerado em: x ${x.toFixed(2)}, y ${y.toFixed(2)}, z ${z.toFixed(2)}`);
+    messageContainer.textContent = `Fantasma a ${Math.round(randomDistance)} metros!`;
+    console.log(`Fantasma gerado em: x ${x.toFixed(2)}, y ${y.toFixed(2)}, z ${z.toFixed(2)} (GPS: lat ${ghostSpawnGPS.latitude.toFixed(6)}, lon ${ghostSpawnGPS.longitude.toFixed(6)})`);
 }
 
 function locationError(error) {
