@@ -336,7 +336,7 @@ h1 {
 
 /* Game Screen */
 #game-screen {
-    background: #000;
+    background: transparent; /* Allow camera feed to show through */
 }
 
 #ar-scene {
