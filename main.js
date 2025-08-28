@@ -25,8 +25,15 @@ const testLocation = {
     longitude: -48.66775914489331,
     radius: 100 // metros
 };
+
+// Localização alvo do fantasma (aleatória dentro da área de teste para simulação)
+const ghostTargetLocation = {
+    latitude: testLocation.latitude + (Math.random() - 0.5) * 0.0005, 
+    longitude: testLocation.longitude + (Math.random() - 0.5) * 0.0005
+};
+
 let locationWatchId = null;
-let isGhostSpawned = false; // Será gerenciado pela lógica customizada WebXR
+let isGhostSpawned = false;
 
 // --- Elementos da UI ---
 const googleLoginBtn = document.getElementById('google-login');
@@ -37,6 +44,7 @@ const beamBtn = document.getElementById('beam-btn');
 const pkeMeterUI = document.getElementById('pke-meter');
 const messageContainer = document.getElementById('message-container');
 const sceneEl = document.querySelector('a-scene'); // Obtém o elemento da cena A-Frame
+const ghostEntity = document.getElementById('ghost-entity'); // Reativado
 
 const logoutBtn = document.createElement('button');
 logoutBtn.textContent = 'Logout';
@@ -127,7 +135,7 @@ sceneEl.addEventListener('exit-vr', () => {
         locationWatchId = null;
     }
     // Esconde o fantasma se ele foi gerado
-    // ghostEntity.setAttribute('visible', 'false'); // Precisará readicionar ghostEntity
+    ghostEntity.setAttribute('visible', 'false'); // Reativado
     isGhostSpawned = false;
     showScreen('map-screen'); // Volta para a tela do mapa
 });
@@ -148,10 +156,10 @@ function handleLocationUpdate(position) {
         pkeMeterUI.classList.add('hidden');
         messageContainer.textContent = "Você está na área de caça!";
 
-        // A lógica de spawn de fantasmas virá aqui mais tarde, baseada nas coordenadas WebXR
-        // if (!isGhostSpawned) {
-        //     spawnGhost(userCoords);
-        // }
+        // Lógica de spawn de fantasmas
+        if (!isGhostSpawned) {
+            spawnGhost(userCoords);
+        }
 
     } else {
         // Fora do raio
@@ -162,15 +170,41 @@ function handleLocationUpdate(position) {
         outsideRadiusAudio.play().catch(e => console.log("Áudio bloqueado pelo navegador."));
         
         // Esconde o fantasma se o jogador sair da área
-        // if(isGhostSpawned) {
-        //     ghostEntity.setAttribute('visible', 'false');
-        //     isGhostSpawned = false;
-        // }
+        if(isGhostSpawned) {
+            ghostEntity.setAttribute('visible', 'false');
+            isGhostSpawned = false;
+        }
     }
 }
 
-// Funções spawnGhost, haversineDistance, calculateDestinationPoint serão reimplementadas
-// com o sistema de coordenadas WebXR.
+function spawnGhost(userCoords) {
+    console.log("Gerando fantasma em WebXR...");
+
+    const distanceToGhost = haversineDistance(userCoords, ghostTargetLocation);
+    const bearingToGhost = getBearing(userCoords, ghostTargetLocation);
+
+    // Converte coordenadas polares (distância, bearing) para Cartesianas (x, z)
+    // No A-Frame/Three.js, +X é direita, +Z é para frente (longe da câmera), -Z é para trás (em direção à câmera)
+    // Bearing 0 é Norte (positivo Z), 90 é Leste (positivo X)
+    // Precisamos ajustar para o sistema de coordenadas do A-Frame:
+    // Norte (0 deg) -> -Z
+    // Leste (90 deg) -> +X
+    // Sul (180 deg) -> +Z
+    // Oeste (270 deg) -> -X
+
+    // Ajusta o ângulo para o sistema de coordenadas do A-Frame (Norte é -Z)
+    const angleRad = (90 - bearingToGhost) * Math.PI / 180; // 90 - bearing para alinhar Norte com -Z e Leste com +X
+
+    const x = distanceToGhost * Math.cos(angleRad);
+    const z = distanceToGhost * Math.sin(angleRad);
+    const y = 1.5; // Altura fixa acima do chão
+
+    ghostEntity.setAttribute('position', `${x} ${y} ${z}`);
+    ghostEntity.setAttribute('visible', 'true');
+    isGhostSpawned = true;
+    messageContainer.textContent = "Um fantasma apareceu!";
+    console.log(`Fantasma gerado em: x ${x.toFixed(2)}, y ${y.toFixed(2)}, z ${z.toFixed(2)}`);
+}
 
 function locationError(error) {
     console.error("Erro de geolocalização:", error);
@@ -200,7 +234,6 @@ function initializeMap() {
     startGameBtn.disabled = false;
 }
 
-// Re-adicionando Haversine e calculateDestinationPoint, pois são úteis para a lógica de GPS
 function haversineDistance(coords1, coords2) {
     const R = 6371e3; // Raio da Terra em metros
     const lat1 = coords1.latitude * Math.PI / 180;
@@ -212,19 +245,16 @@ function haversineDistance(coords1, coords2) {
     return R * c;
 }
 
-function calculateDestinationPoint(startPoint, bearing, distance) {
-    const R = 6371e3; // Raio da Terra em metros
-    const d = distance;
-
+function getBearing(startPoint, endPoint) {
     const lat1 = startPoint.latitude * Math.PI / 180;
     const lon1 = startPoint.longitude * Math.PI / 180;
-    const brng = bearing * Math.PI / 180;
+    const lat2 = endPoint.latitude * Math.PI / 180;
+    const lon2 = endPoint.longitude * Math.PI / 180;
 
-    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d / R) + Math.cos(lat1) * Math.sin(d / R) * Math.cos(brng));
-    const lon2 = lon1 + Math.atan2(Math.sin(brng) * Math.sin(d / R) * Math.cos(lat1), Math.cos(d / R) - Math.sin(lat1) * Math.sin(lat2));
+    const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+              Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    const bearing = Math.atan2(y, x) * 180 / Math.PI;
 
-    return {
-        latitude: lat2 * 180 / Math.PI,
-        longitude: (lon2 * 180 / Math.PI + 540) % 360 - 180 // Normaliza para -180 a +180
-    };
+    return (bearing + 360) % 360; // Normaliza para 0-360
 }
