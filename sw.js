@@ -1,6 +1,8 @@
 // Importa a biblioteca Workbox a partir da CDN
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
 
+// Cache Version: v1.1
+
 // Verifica se o Workbox foi carregado
 if (workbox) {
   console.log(`Workbox carregado com sucesso!`);
