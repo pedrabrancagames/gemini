@@ -26,7 +26,7 @@ const testLocation = {
     radius: 100 // metros
 };
 let locationWatchId = null;
-let isGhostSpawned = false;
+let isGhostSpawned = false; // Será gerenciado pela lógica customizada WebXR
 
 // --- Elementos da UI ---
 const googleLoginBtn = document.getElementById('google-login');
@@ -36,7 +36,7 @@ const protonPackUI = document.getElementById('proton-pack');
 const beamBtn = document.getElementById('beam-btn');
 const pkeMeterUI = document.getElementById('pke-meter');
 const messageContainer = document.getElementById('message-container');
-const ghostEntity = document.getElementById('ghost-entity');
+const sceneEl = document.querySelector('a-scene'); // Obtém o elemento da cena A-Frame
 
 const logoutBtn = document.createElement('button');
 logoutBtn.textContent = 'Logout';
@@ -74,26 +74,64 @@ function handleAuthError(error) {
     alert(`Erro no login: ${error.message}`);
 }
 
-// --- Lógica de Permissões e Jogo ---
+// --- Lógica de Permissões e Jogo (WebXR) ---
 async function requestPermissionsAndStart() {
-    console.log("Solicitando permissões...");
+    console.log("Solicitando permissões e iniciando WebXR...");
     try {
-        // A permissão da câmera será solicitada pelo AR.js automaticamente.
-        // Foca apenas na permissão de GPS aqui.
+        // 1. Solicitar permissão de GPS
         await new Promise((resolve, reject) => {
             if (!navigator.geolocation) return reject(new Error("Geolocalização não suportada."));
             navigator.geolocation.getCurrentPosition(resolve, reject);
         });
         console.log("Permissão de GPS concedida.");
 
-        // Se a permissão de GPS foi concedida, prossegue para a tela AR
-        showScreen('ar-screen');
+        // 2. Verificar suporte a WebXR e iniciar sessão AR
+        if (navigator.xr) {
+            const isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
+            if (!isARSupported) {
+                throw new Error('AR imersivo não é suportado neste dispositivo.');
+            }
+            console.log("WebXR imersivo suportado.");
+
+            // Entrar na sessão AR (A-Frame cuidará da câmera)
+            await sceneEl.enterAR();
+            console.log("Sessão AR iniciada.");
+            showScreen('ar-screen'); // Mostra a tela AR após o início da sessão
+
+        } else {
+            throw new Error('WebXR não é suportado neste navegador.');
+        }
 
     } catch (error) {
-        console.error("Erro ao obter permissões:", error);
-        alert(`Erro: ${error.message || "Permissão de GPS é necessária para jogar."}`);
+        console.error("Erro ao iniciar AR/obter permissões:", error);
+        alert(`Erro: ${error.message || "Permissões e/ou suporte a AR são necessários para jogar."}`);
     }
 }
+
+// --- WebXR Session Event Listeners ---
+sceneEl.addEventListener('enter-vr', () => {
+    console.log('Evento enter-vr disparado (iniciando AR)');
+    // Este evento é disparado quando o A-Frame entra com sucesso no modo AR
+    // Agora podemos iniciar o rastreamento de localização e o gerenciamento de fantasmas
+    if (!locationWatchId) {
+        locationWatchId = navigator.geolocation.watchPosition(handleLocationUpdate, locationError, { enableHighAccuracy: true });
+    }
+    // A lógica de spawn de fantasmas virá aqui mais tarde, baseada nas coordenadas WebXR
+});
+
+sceneEl.addEventListener('exit-vr', () => {
+    console.log('Saindo do modo AR.');
+    // Limpa o rastreamento de localização ao sair do AR
+    if (locationWatchId) {
+        navigator.geolocation.clearWatch(locationWatchId);
+        locationWatchId = null;
+    }
+    // Esconde o fantasma se ele foi gerado
+    // ghostEntity.setAttribute('visible', 'false'); // Precisará readicionar ghostEntity
+    isGhostSpawned = false;
+    showScreen('map-screen'); // Volta para a tela do mapa
+});
+
 
 function handleLocationUpdate(position) {
     const userCoords = {
@@ -110,9 +148,10 @@ function handleLocationUpdate(position) {
         pkeMeterUI.classList.add('hidden');
         messageContainer.textContent = "Você está na área de caça!";
 
-        if (!isGhostSpawned) {
-            spawnGhost(userCoords);
-        }
+        // A lógica de spawn de fantasmas virá aqui mais tarde, baseada nas coordenadas WebXR
+        // if (!isGhostSpawned) {
+        //     spawnGhost(userCoords);
+        // }
 
     } else {
         // Fora do raio
@@ -123,27 +162,15 @@ function handleLocationUpdate(position) {
         outsideRadiusAudio.play().catch(e => console.log("Áudio bloqueado pelo navegador."));
         
         // Esconde o fantasma se o jogador sair da área
-        if(isGhostSpawned) {
-            ghostEntity.setAttribute('visible', 'false');
-            isGhostSpawned = false; // Permite que o fantasma apareça novamente ao reentrar na área
-        }
+        // if(isGhostSpawned) {
+        //     ghostEntity.setAttribute('visible', 'false');
+        //     isGhostSpawned = false;
+        // }
     }
 }
 
-function spawnGhost(userCoords) {
-    console.log("Gerando fantasma...");
-    const spawnRadius = 10; // Raio de 10m para teste
-    const randomDistance = Math.random() * spawnRadius; // Distância aleatória até 10m
-    const randomAngle = Math.random() * 360; // Ângulo aleatório
-
-    const ghostPosition = calculateDestinationPoint(userCoords, randomAngle, randomDistance);
-
-    ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostPosition.latitude}; longitude: ${ghostPosition.longitude};`);
-    ghostEntity.setAttribute('visible', 'true');
-    isGhostSpawned = true;
-    messageContainer.textContent = "Um fantasma apareceu!";
-    console.log(`Fantasma gerado em: lat ${ghostPosition.latitude}, lon ${ghostPosition.longitude}`);
-}
+// Funções spawnGhost, haversineDistance, calculateDestinationPoint serão reimplementadas
+// com o sistema de coordenadas WebXR.
 
 function locationError(error) {
     console.error("Erro de geolocalização:", error);
@@ -155,23 +182,13 @@ function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 
-    if (screenId === 'ar-screen') {
-        if (!locationWatchId) {
-            locationWatchId = navigator.geolocation.watchPosition(handleLocationUpdate, locationError, { enableHighAccuracy: true });
-        }
-    } else {
-        if (locationWatchId) {
-            navigator.geolocation.clearWatch(locationWatchId);
-            locationWatchId = null;
-        }
-    }
+    // Não gerencia mais watchPosition aqui, é gerenciado pelos eventos enter-vr/exit-vr
 }
 
 function initializeMap() {
     const map = L.map('map').setView([testLocation.latitude, testLocation.longitude], 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
     
-    // CORREÇÃO: Criar o círculo, adicioná-lo ao mapa e DEPOIS usar seus limites
     const huntingAreaCircle = L.circle([testLocation.latitude, testLocation.longitude], {
         radius: testLocation.radius,
         color: 'yellow',
@@ -180,10 +197,10 @@ function initializeMap() {
 
     map.fitBounds(huntingAreaCircle.getBounds());
     
-    // Agora esta linha será executada sem erros
     startGameBtn.disabled = false;
 }
 
+// Re-adicionando Haversine e calculateDestinationPoint, pois são úteis para a lógica de GPS
 function haversineDistance(coords1, coords2) {
     const R = 6371e3; // Raio da Terra em metros
     const lat1 = coords1.latitude * Math.PI / 180;
