@@ -20,7 +20,8 @@ if (workbox) {
   // Estratégia de Pre-caching para o App Shell e assets principais
   // Estes arquivos serão cacheados durante a instalação do Service Worker
   precacheAndRoute([
-    { url: 'index.html', revision: null },
+    { url: '/', revision: null }, // Cache a raiz do site para GitHub Pages
+    { url: 'index.html', revision: null }, // Mantém para acesso direto, se aplicável
     { url: 'style.css', revision: null },
     { url: 'main.js', revision: null },
     { url: 'firebase-config.js', revision: null },

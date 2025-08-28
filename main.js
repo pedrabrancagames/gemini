@@ -88,10 +88,12 @@ async function requestPermissionsAndStart() {
         });
         console.log("Permissão de GPS concedida.");
 
+        // Se as permissões foram concedidas, prossegue para a tela AR
         showScreen('ar-screen');
+
     } catch (error) {
-        console.error("Permissão negada.", error);
-        alert("Permissão de Câmera e GPS são necessárias para jogar.");
+        console.error("Erro ao obter permissões:", error);
+        alert(`Erro: ${error.message || "Permissão de Câmera e GPS são necessárias para jogar."}`);
     }
 }
 
