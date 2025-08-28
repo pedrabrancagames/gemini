@@ -24,7 +24,6 @@ const googleLoginBtn = document.getElementById('google-login');
 const anonLoginBtn = document.getElementById('anon-login');
 const startGameBtn = document.getElementById('start-game-btn');
 
-// Adiciona um botão de logout na tela do mapa para teste
 const logoutBtn = document.createElement('button');
 logoutBtn.textContent = 'Logout';
 logoutBtn.id = 'logout-btn';
@@ -33,19 +32,15 @@ logoutBtn.style.top = '10px';
 logoutBtn.style.right = '10px';
 document.getElementById('map-screen').appendChild(logoutBtn);
 
-
 // --- Gerenciamento de Estado de Autenticação ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Usuário está logado
         console.log('Usuário logado:', user.uid);
         showScreen('map-screen');
-        // Garante que o mapa seja inicializado apenas uma vez
         if (!document.getElementById('map')._leaflet_id) {
              initializeMap();
         }
     } else {
-        // Usuário está deslogado
         console.log('Nenhum usuário logado.');
         showScreen('login-screen');
     }
@@ -53,29 +48,59 @@ onAuthStateChanged(auth, (user) => {
 
 // --- Listeners de Eventos ---
 googleLoginBtn.addEventListener('click', () => {
-    signInWithPopup(auth, googleProvider)
-        .catch((error) => {
-            console.error("Erro no login com Google:", error);
-            alert(`Erro no login: ${error.message}`);
-        });
+    signInWithPopup(auth, googleProvider).catch((error) => {
+        console.error("Erro no login com Google:", error);
+        alert(`Erro no login: ${error.message}`);
+    });
 });
 
 anonLoginBtn.addEventListener('click', () => {
-    signInAnonymously(auth)
-        .catch((error) => {
-            console.error("Erro no login anônimo:", error);
-            alert(`Erro no login: ${error.message}`);
-        });
+    signInAnonymously(auth).catch((error) => {
+        console.error("Erro no login anônimo:", error);
+        alert(`Erro no login: ${error.message}`);
+    });
 });
 
-startGameBtn.addEventListener('click', () => {
-    showScreen('ar-screen');
-    // Futura lógica para iniciar o jogo AR
-});
+startGameBtn.addEventListener('click', requestPermissionsAndStart);
 
 logoutBtn.addEventListener('click', () => {
     signOut(auth);
 });
+
+// --- Lógica de Permissões e Início do Jogo ---
+async function requestPermissionsAndStart() {
+    console.log("Solicitando permissões...");
+    try {
+        // 1. Solicitar permissão da Câmera
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Boa prática: parar a trilha se só precisamos da permissão
+        console.log("Permissão de câmera concedida.");
+
+        // 2. Solicitar permissão de GPS
+        await new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error("Geolocalização não é suportada pelo navegador."));
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log("Permissão de GPS concedida:", position);
+                    resolve(position);
+                },
+                (error) => {
+                    reject(error);
+                }
+            );
+        });
+
+        // 3. Se ambas as permissões foram concedidas, iniciar o jogo
+        console.log("Todas as permissões concedidas. Iniciando o jogo.");
+        showScreen('ar-screen');
+
+    } catch (error) {
+        console.error("Uma ou mais permissões foram negadas.", error);
+        alert("Permissão de Câmera e GPS são necessárias para jogar. Por favor, habilite-as nas configurações do seu navegador e recarregue a página.");
+    }
+}
 
 // --- Funções Auxiliares ---
 function showScreen(screenId) {
@@ -107,6 +132,5 @@ function initializeMap() {
 
     map.fitBounds(circle.getBounds());
 
-    // Habilita o botão de iniciar (a lógica de geolocalização será adicionada depois)
     document.getElementById('start-game-btn').disabled = false;
 }
