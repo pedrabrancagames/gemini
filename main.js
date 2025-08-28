@@ -1,3 +1,14 @@
+// --- Registro do Service Worker ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('Service Worker registrado com sucesso:', registration);
+        }).catch(error => {
+            console.log('Falha no registro do Service Worker:', error);
+        });
+    });
+}
+
 // Importar dependências do Firebase
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
