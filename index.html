@@ -41,7 +41,7 @@
 
     <!-- Tela de AR -->
     <div id="ar-screen" class="screen">
-        <a-scene arjs="sourceType: webcam; video: #arjs-video; debugUIEnabled: false;" vr-mode-ui="enabled: false">
+        <a-scene arjs="sourceType: video; video: #arjs-video; debugUIEnabled: false;" vr-mode-ui="enabled: false">
             <a-entity id="ghost-entity" gltf-model="assets/models/ghost.glb" scale="0.1 0.1 0.1" gps-entity-place visible="false"></a-entity>
             <a-camera gps-camera rotation-reader></a-camera>
         </a-scene>
