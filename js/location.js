@@ -20,6 +20,9 @@ class LocationManager {
     }
 
     initializeMap() {
+        if (this.map) { // Prevent re-initialization
+            return;
+        }
         // Wait for the location screen to be visible
         const mapContainer = document.getElementById('map');
         if (!mapContainer || !mapContainer.offsetParent) {

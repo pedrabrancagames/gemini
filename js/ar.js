@@ -113,23 +113,8 @@ class ARManager {
     }
 
     async startARCamera() {
-        try {
-            // Request camera access with AR-optimized settings
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'environment', // Use back camera
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    frameRate: { ideal: 30 }
-                }
-            });
-            
-            console.log('📸 Câmera AR iniciada');
-            
-        } catch (error) {
-            console.error('❌ Erro ao iniciar câmera AR:', error);
-            utils.showToast('Erro ao acessar câmera', 'error');
-        }
+        // AR.js handles camera initialization automatically via a-scene component
+        console.log('📸 Câmera AR será iniciada pelo AR.js');
     }
 
     addGhost(ghost) {
