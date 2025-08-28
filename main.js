@@ -238,23 +238,12 @@ function spawnGhost(userCoords) {
     const ghostSpawnGPS = calculateDestinationPoint(userCoords, randomAngle, randomDistance);
     currentGhostGPS = ghostSpawnGPS; // Armazena a localização GPS do fantasma
 
-    // Converte coordenadas polares (distância, bearing) para Cartesianas (x, z)
-    // No A-Frame/Three.js, +X é direita, +Z é para frente (longe da câmera), -Z é para trás (em direção à câmera)
-    // Bearing 0 é Norte (positivo Z), 90 é Leste (positivo X)
-    // Precisamos ajustar para o sistema de coordenadas do A-Frame:
-    // Norte (0 deg) -> -Z
-    // Leste (90 deg) -> +X
-    // Sul (180 deg) -> +Z
-    // Oeste (270 deg) -> -X
-
-    // Ajusta o ângulo para o sistema de coordenadas do A-Frame (Norte é -Z)
-    const angleRad = (90 - randomAngle) * Math.PI / 180; // 90 - bearing para alinhar Norte com -Z e Leste com +X
-
-    const x = randomDistance * Math.cos(angleRad);
-    const z = randomDistance * Math.sin(angleRad);
+    // O componente gps-entity-place no A-Frame cuidará do posicionamento baseado em GPS.
+    // Apenas definimos as coordenadas GPS e a altura (y).
     const y = 1.5; // Altura fixa acima do chão
 
-    ghostEntity.setAttribute('position', `${x} ${y} ${z}`);
+    ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostSpawnGPS.latitude}; longitude: ${ghostSpawnGPS.longitude};`);
+    ghostEntity.setAttribute('position', `0 ${y} 0`); // Define a posição local para a altura, gps-entity-place ajustará o resto.
     ghostEntity.setAttribute('visible', 'true');
     isGhostSpawned = true;
     messageContainer.textContent = `Fantasma a ${Math.round(randomDistance)} metros!`;
