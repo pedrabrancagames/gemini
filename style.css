@@ -123,7 +123,7 @@ a-scene {
 }
 
 .ui-bottom {
-    justify-content: center;
+    justify-content: flex-end; /* Alinhado à direita */
     position: relative;
 }
 
@@ -139,7 +139,9 @@ a-scene {
     background-color: rgba(255, 0, 0, 0.7);
     border: 3px solid #fff;
     pointer-events: all;
-    bottom: 70px; /* Ajuste conforme a imagem do proton pack */
+    bottom: 70px;
+    left: 50%; /* Centraliza o botão na tela */
+    transform: translateX(-50%); /* Garante a centralização exata */
 }
 
 #pke-meter {
