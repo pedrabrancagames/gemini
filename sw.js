@@ -1,41 +1,31 @@
 // Service Worker for Ghostbusters AR
 const CACHE_NAME = 'ghostbusters-ar-v1.0.0';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/manifest.json',
-    '/favicon.ico',
+    './',
+    './index.html',
+    './styles.css',
+    './manifest.json',
+    './favicon.ico',
     
     // JavaScript files
-    '/js/config.js',
-    '/js/auth.js',
-    '/js/app.js',
-    '/js/location.js',
-    '/js/game.js',
-    '/js/ar.js',
-    '/js/inventory.js',
-    '/js/qr-scanner.js',
+    './js/config.js',
+    './js/auth.js',
+    './js/app.js',
+    './js/location.js',
+    './js/game.js',
+    './js/ar.js',
+    './js/inventory.js',
+    './js/qr-scanner.js',
     
     // Assets
-    '/assets/images/logo.png',
-    '/assets/images/proton_pack.png',
-    '/assets/images/ghost_trap.png',
-    '/assets/images/pke_meter.png',
-    '/assets/models/ghost.glb',
-    '/assets/audio/proton-beam.mp3',
-    '/assets/audio/inventory_full.mp3',
-    '/assets/audio/outside_radius.mp3',
-    
-    // External libraries (CDN)
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js',
-    'https://aframe.io/releases/1.4.0/aframe.min.js',
-    'https://cdn.jsdelivr.net/npm/aframe-ar-js@3.4.5/dist/aframe-ar.min.js',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/@zxing/library@latest/umd/index.min.js'
+    './assets/images/logo.png',
+    './assets/images/proton_pack.png',
+    './assets/images/ghost_trap.png',
+    './assets/images/pke_meter.png',
+    './assets/models/ghost.glb',
+    './assets/audio/proton-beam.mp3',
+    './assets/audio/inventory_full.mp3',
+    './assets/audio/outside_radius.mp3'
 ];
 
 // Install event - cache resources
