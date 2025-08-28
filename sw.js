@@ -5,6 +5,12 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox
 if (workbox) {
   console.log(`Workbox carregado com sucesso!`);
 
+  // Configura Workbox para GitHub Pages
+  workbox.setConfig({
+    debug: false,
+    urlBase: '/gemini/' // Define a base URL para o precaching no GitHub Pages
+  });
+
   const { precacheAndRoute } = workbox.precaching;
   const { registerRoute } = workbox.routing;
   const { CacheFirst, StaleWhileRevalidate } = workbox.strategies;
