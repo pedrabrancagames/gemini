@@ -30,6 +30,57 @@ let locationWatchId = null;
 let isGhostSpawned = false;
 let currentGhostGPS = null; // Armazena a localização GPS do fantasma gerado
 
+// --- Funções de Utilidade Geográfica ---
+function haversineDistance(coords1, coords2) {
+    const R = 6371e3; // Raio da Terra em metros
+    const lat1 = coords1.latitude * Math.PI / 180;
+    const lat2 = coords2.latitude * Math.PI / 180;
+    const deltaLat = (coords2.latitude - coords1.latitude) * Math.PI / 180;
+    const deltaLon = (coords2.longitude - coords1.longitude) * Math.PI / 180;
+    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function getBearing(startPoint, endPoint) {
+    const lat1 = startPoint.latitude * Math.PI / 180;
+    const lon1 = startPoint.longitude * Math.PI / 180;
+    const lat2 = endPoint.latitude * Math.PI / 180;
+    const lon2 = endPoint.longitude * Math.PI / 180;
+
+    const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+              Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+    const bearing = Math.atan2(y, x) * 180 / Math.PI;
+
+    return (bearing + 360) % 360; // Normaliza para 0-360
+}
+
+function calculateDestinationPoint(startPoint, bearing, distance) {
+    const R = 6371e3; // Raio da Terra em metros
+    const latRad = startPoint.latitude * Math.PI / 180;
+    const lonRad = startPoint.longitude * Math.PI / 180;
+    const bearingRad = bearing * Math.PI / 180;
+
+    const latDestRad = Math.asin(
+        Math.sin(latRad) * Math.cos(distance / R) +
+        Math.cos(latRad) * Math.sin(distance / R) * Math.cos(bearingRad)
+    );
+
+    let lonDestRad = lonRad + Math.atan2(
+        Math.sin(bearingRad) * Math.sin(distance / R) * Math.cos(latRad),
+        Math.cos(distance / R) - Math.sin(latRad) * Math.sin(latDestRad)
+    );
+
+    // Normaliza a longitude para -180 a +180
+    lonDestRad = (lonDestRad + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+
+    return {
+        latitude: latDestRad * 180 / Math.PI,
+        longitude: lonDestRad * 180 / Math.PI
+    };
+}
+
 // --- Elementos da UI ---
 const googleLoginBtn = document.getElementById('google-login');
 const anonLoginBtn = document.getElementById('anon-login');
@@ -236,29 +287,4 @@ function initializeMap() {
     map.fitBounds(huntingAreaCircle.getBounds());
     
     startGameBtn.disabled = false;
-}
-
-function haversineDistance(coords1, coords2) {
-    const R = 6371e3; // Raio da Terra em metros
-    const lat1 = coords1.latitude * Math.PI / 180;
-    const lat2 = coords2.latitude * Math.PI / 180;
-    const deltaLat = (coords2.latitude - coords1.latitude) * Math.PI / 180;
-    const deltaLon = (coords2.longitude - coords1.longitude) * Math.PI / 180;
-    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-function getBearing(startPoint, endPoint) {
-    const lat1 = startPoint.latitude * Math.PI / 180;
-    const lon1 = startPoint.longitude * Math.PI / 180;
-    const lat2 = endPoint.latitude * Math.PI / 180;
-    const lon2 = endPoint.longitude * Math.PI / 180;
-
-    const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) -
-              Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
-    const bearing = Math.atan2(y, x) * 180 / Math.PI;
-
-    return (bearing + 360) % 360; // Normaliza para 0-360
 }
