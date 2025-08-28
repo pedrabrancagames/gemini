@@ -20,11 +20,11 @@ if (workbox) {
   // Estratégia de Pre-caching para o App Shell e assets principais
   // Estes arquivos serão cacheados durante a instalação do Service Worker
   precacheAndRoute([
-    { url: '/index.html', revision: null },
-    { url: '/style.css', revision: null },
-    { url: '/main.js', revision: null },
-    { url: '/firebase-config.js', revision: null },
-    { url: '/favicon.ico', revision: null },
+    { url: 'index.html', revision: null },
+    { url: 'style.css', revision: null },
+    { url: 'main.js', revision: null },
+    { url: 'firebase-config.js', revision: null },
+    { url: 'favicon.ico', revision: null },
     // Assets de Imagem
     { url: 'assets/images/logo.png', revision: null },
     { url: 'assets/images/ghost_trap.png', revision: null },
