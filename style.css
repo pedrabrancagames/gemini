@@ -1,0 +1,160 @@
+/* Estilos Globais */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: sans-serif;
+    background-color: #000;
+    color: #fff;
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.screen.active {
+    display: flex;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    background-color: #f0ad4e;
+    border: none;
+    border-radius: 5px;
+    color: #000;
+    margin-top: 10px;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.logo {
+    max-width: 200px;
+    margin-bottom: 20px;
+}
+
+/* Tela de Carregamento */
+#loading-screen {
+    background-color: #000;
+}
+
+.progress-bar {
+    width: 80%;
+    height: 30px;
+    background-color: #333;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#progress-bar-inner {
+    width: 0%;
+    height: 100%;
+    background-color: #f0ad4e;
+    transition: width 0.5s;
+}
+
+/* Tela de Login */
+#login-screen {
+    background-color: #111;
+}
+
+/* Tela do Mapa */
+#map-screen {
+    justify-content: flex-start;
+}
+#map {
+    width: 100%;
+    height: 70vh;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+/* Tela de AR */
+#ar-screen {
+    padding: 0;
+    justify-content: initial;
+    align-items: initial;
+}
+
+a-scene {
+    width: 100%;
+    height: 100%;
+}
+
+#game-ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ui-top, .ui-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.ui-top img {
+    width: 50px;
+    pointer-events: all;
+    cursor: pointer;
+}
+
+.ui-bottom {
+    justify-content: center;
+    position: relative;
+}
+
+#proton-pack {
+    width: 250px;
+}
+
+#beam-btn {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 0, 0, 0.7);
+    border: 3px solid #fff;
+    pointer-events: all;
+    bottom: 70px; /* Ajuste conforme a imagem do proton pack */
+}
+
+#pke-meter {
+    width: 150px;
+}
+
+#message-container {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 0 auto;
+    max-width: 80%;
+}
+
+.hidden {
+    display: none;
+}
