@@ -78,22 +78,20 @@ function handleAuthError(error) {
 async function requestPermissionsAndStart() {
     console.log("Solicitando permissões...");
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop());
-        console.log("Permissão de câmera concedida.");
-
+        // A permissão da câmera será solicitada pelo AR.js automaticamente.
+        // Foca apenas na permissão de GPS aqui.
         await new Promise((resolve, reject) => {
             if (!navigator.geolocation) return reject(new Error("Geolocalização não suportada."));
             navigator.geolocation.getCurrentPosition(resolve, reject);
         });
         console.log("Permissão de GPS concedida.");
 
-        // Se as permissões foram concedidas, prossegue para a tela AR
+        // Se a permissão de GPS foi concedida, prossegue para a tela AR
         showScreen('ar-screen');
 
     } catch (error) {
         console.error("Erro ao obter permissões:", error);
-        alert(`Erro: ${error.message || "Permissão de Câmera e GPS são necessárias para jogar."}`);
+        alert(`Erro: ${error.message || "Permissão de GPS é necessária para jogar."}`);
     }
 }
 

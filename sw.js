@@ -20,23 +20,23 @@ if (workbox) {
   // Estratégia de Pre-caching para o App Shell e assets principais
   // Estes arquivos serão cacheados durante a instalação do Service Worker
   precacheAndRoute([
-    { url: '/', revision: null }, // Cache a raiz do site para GitHub Pages
-    { url: 'index.html', revision: null }, // Mantém para acesso direto, se aplicável
-    { url: 'style.css', revision: null },
-    { url: 'main.js', revision: null },
-    { url: 'firebase-config.js', revision: null },
-    { url: 'favicon.ico', revision: null },
+    { url: '/gemini/', revision: null }, // Raiz do projeto no GitHub Pages
+    { url: '/gemini/index.html', revision: null },
+    { url: '/gemini/style.css', revision: null },
+    { url: '/gemini/main.js', revision: null },
+    { url: '/gemini/firebase-config.js', revision: null },
+    { url: '/gemini/favicon.ico', revision: null },
     // Assets de Imagem
-    { url: 'assets/images/logo.png', revision: null },
-    { url: 'assets/images/ghost_trap.png', revision: null },
-    { url: 'assets/images/pke_meter.png', revision: null },
-    { url: 'assets/images/proton_pack.png', revision: null },
+    { url: '/gemini/assets/images/logo.png', revision: null },
+    { url: '/gemini/assets/images/ghost_trap.png', revision: null },
+    { url: '/gemini/assets/images/pke_meter.png', revision: null },
+    { url: '/gemini/assets/images/proton_pack.png', revision: null },
     // Assets de Modelo 3D
-    { url: 'assets/models/ghost.glb', revision: null },
+    { url: '/gemini/assets/models/ghost.glb', revision: null },
     // Assets de Áudio
-    { url: 'assets/audio/inventory_full.mp3', revision: null },
-    { url: 'assets/audio/outside_radius.mp3', revision: null },
-    { url: 'assets/audio/proton-beam.mp3', revision: null }
+    { url: '/gemini/assets/audio/inventory_full.mp3', revision: null },
+    { url: '/gemini/assets/audio/outside_radius.mp3', revision: null },
+    { url: '/gemini/assets/audio/proton-beam.mp3', revision: null }
   ]);
 
   // Estratégia de Runtime Caching para os tiles do mapa (OpenStreetMap)
