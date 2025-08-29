@@ -38,11 +38,13 @@
     <!-- Tela de AR -->
     <div id="ar-screen" class="screen">
         <a-scene
+            webxr="requiredFeatures: hit-test, local-floor; optionalFeatures: dom-overlay; overlayElement: #game-ui;"
             vr-mode-ui="enabled: false;"
             renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true; physicallyCorrectLights: true;"
             background="color: transparent;">
-            <a-entity id="ghost-entity" gltf-model="assets/models/ghost.glb" scale="1 1 1" gps-entity-place visible="false"></a-entity>
+            <a-entity id="ghost-entity" gltf-model="assets/models/ghost.glb" scale="1 1 1" visible="false"></a-entity>
             <a-camera>
+                <a-cursor raycaster="objects: .clickable" geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" material="color: #e72626; shader: flat"></a-cursor>
             </a-camera>
         </a-scene>
 
@@ -57,6 +59,7 @@
                  <img src="assets/images/pke_meter.png" id="pke-meter" class="hidden" alt="P.K.E. Meter">
                  <img src="assets/images/proton_pack.png" id="proton-pack" alt="Proton Pack">
                  <button id="beam-btn"></button>
+                 <button id="spawn-ghost-btn">Gerar Fantasma</button>
             </div>
         </div>
     </div>

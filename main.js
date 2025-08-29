@@ -29,6 +29,8 @@ const testLocation = {
 let locationWatchId = null;
 let isGhostSpawned = false;
 let currentGhostGPS = null; // Armazena a localização GPS do fantasma gerado
+let xrSession = null; // Armazena a sessão WebXR
+let xrReferenceSpace = null; // Armazena o espaço de referência WebXR
 
 // --- Funções de Utilidade Geográfica ---
 function haversineDistance(coords1, coords2) {
@@ -100,6 +102,8 @@ logoutBtn.style.top = '10px';
 logoutBtn.style.right = '10px';
 document.getElementById('map-screen').appendChild(logoutBtn);
 
+const spawnGhostBtn = document.getElementById('spawn-ghost-btn');
+
 // --- Áudio ---
 const outsideRadiusAudio = new Audio('assets/audio/outside_radius.mp3');
 
@@ -122,6 +126,48 @@ googleLoginBtn.addEventListener('click', () => signInWithPopup(auth, googleProvi
 anonLoginBtn.addEventListener('click', () => signInAnonymously(auth).catch(handleAuthError));
 startGameBtn.addEventListener('click', requestPermissionsAndStart);
 logoutBtn.addEventListener('click', () => signOut(auth));
+
+spawnGhostBtn.addEventListener('click', async () => {
+    if (!xrSession || !xrReferenceSpace) {
+        console.error("Sessão WebXR ou espaço de referência não disponível para hit-test.");
+        messageContainer.textContent = "Erro: AR não pronto para gerar fantasma.";
+        return;
+    }
+
+    // Perform hit test from the center of the screen
+    // This requires an XRFrame, which is usually obtained in the render loop.
+    // For a button click, we can try to get the latest frame.
+    // A-Frame's renderer.xr.getFrame() might provide it.
+    const frame = sceneEl.renderer.xr.getFrame();
+
+    if (!frame) {
+        console.warn("Nenhum XRFrame disponível para hit-test.");
+        messageContainer.textContent = "Tente novamente. AR não conseguiu um frame.";
+        return;
+    }
+
+    // Create a hit test source (can be optimized to create once)
+    const hitTestSource = await xrSession.requestHitTestSource({ space: xrReferenceSpace });
+
+    if (!hitTestSource) {
+        console.error("Não foi possível criar hit test source.");
+        messageContainer.textContent = "Erro: Não foi possível iniciar hit-test.";
+        return;
+    }
+
+    const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+    if (hitTestResults.length > 0) {
+        // Use the first hit result
+        spawnGhost({ results: hitTestResults }); // Pass results in an object to match spawnGhost signature
+    } else {
+        messageContainer.textContent = "Nenhuma superfície detectada para gerar fantasma.";
+        console.log("Nenhum hit test result.");
+    }
+
+    // Clean up hit test source
+    hitTestSource.cancel();
+});
 
 function handleAuthError(error) {
     console.error("Erro na autenticação:", error);
@@ -163,14 +209,22 @@ async function requestPermissionsAndStart() {
 }
 
 // --- WebXR Session Event Listeners ---
-sceneEl.addEventListener('enter-vr', () => {
+sceneEl.addEventListener('enter-vr', async () => {
     console.log('Evento enter-vr disparado (iniciando AR)');
     // Este evento é disparado quando o A-Frame entra com sucesso no modo AR
     // Agora podemos iniciar o rastreamento de localização e o gerenciamento de fantasmas
     if (!locationWatchId) {
         locationWatchId = navigator.geolocation.watchPosition(handleLocationUpdate, locationError, { enableHighAccuracy: true });
     }
-    // A lógica de spawn de fantasmas virá aqui mais tarde, baseada nas coordenadas WebXR
+
+    // Obter a sessão WebXR e o espaço de referência
+    xrSession = sceneEl.renderer.xr.getSession();
+    if (xrSession) {
+        xrReferenceSpace = await xrSession.requestReferenceSpace('local-floor');
+        console.log('Sessão WebXR e espaço de referência obtidos.');
+    } else {
+        console.error('Sessão WebXR não disponível.');
+    }
 });
 
 sceneEl.addEventListener('exit-vr', () => {
@@ -201,9 +255,7 @@ function handleLocationUpdate(position) {
         beamBtn.classList.remove('hidden');
         pkeMeterUI.classList.add('hidden');
         
-        if (!isGhostSpawned) {
-            spawnGhost(userCoords);
-        } else if (currentGhostGPS) { // Se o fantasma já foi gerado, mostra a distância até ele
+        if (currentGhostGPS) { // Se o fantasma já foi gerado, mostra a distância até ele
             const distanceToGhost = haversineDistance(userCoords, currentGhostGPS);
             messageContainer.textContent = `Fantasma a ${Math.round(distanceToGhost)} metros!`;
         } else {
@@ -227,26 +279,23 @@ function handleLocationUpdate(position) {
     }
 }
 
-function spawnGhost(userCoords) {
-    console.log("Gerando fantasma em WebXR...");
+async function spawnGhost(hitResult) {
+    console.log("Gerando fantasma via WebXR hit-test...");
 
-    const spawnRadius = 10; // Raio de 5 a 10m do jogador para teste
-    const minSpawnDistance = 5; // Distância mínima para não spawnar em cima do jogador
-    const randomDistance = minSpawnDistance + (Math.random() * (spawnRadius - minSpawnDistance));
-    const randomAngle = Math.random() * 360; // Ângulo aleatório
+    // Use the pose from the hitResult to position the ghost
+    const pose = hitResult.results[0].pose; // Assuming at least one hit result
 
-    const ghostSpawnGPS = calculateDestinationPoint(userCoords, randomAngle, randomDistance);
-    currentGhostGPS = ghostSpawnGPS; // Armazena a localização GPS do fantasma
+    // Set position and rotation based on the hit test result
+    ghostEntity.object3D.position.copy(pose.transform.position);
+    ghostEntity.object3D.quaternion.copy(pose.transform.orientation);
 
-    // O componente gps-entity-place no A-Frame cuidará do posicionamento baseado em GPS.
-    // Apenas definimos as coordenadas GPS e a altura (y).
-    const y = 0; // Altura fixa acima do chão
+    // Adjust height if necessary (e.g., if model origin is not at base)
+    ghostEntity.object3D.position.y += 0.8; // Example adjustment
 
-    ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostSpawnGPS.latitude}; longitude: ${ghostSpawnGPS.longitude};`);
     ghostEntity.setAttribute('visible', 'true');
     isGhostSpawned = true;
-    messageContainer.textContent = `Fantasma a ${Math.round(randomDistance)} metros!`;
-    console.log(`Fantasma gerado em: y ${y.toFixed(2)} (GPS: lat ${ghostSpawnGPS.latitude.toFixed(6)}, lon ${ghostSpawnGPS.longitude.toFixed(6)})`);
+    messageContainer.textContent = `Fantasma gerado!`; // Message will be updated by distance later
+    console.log(`Fantasma gerado em: x ${ghostEntity.object3D.position.x.toFixed(2)}, y ${ghostEntity.object3D.position.y.toFixed(2)}, z ${ghostEntity.object3D.position.z.toFixed(2)}`);
 }
 
 function locationError(error) {
