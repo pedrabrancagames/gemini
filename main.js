@@ -21,8 +21,8 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 const testLocation = {
-    latitude: -27.630914842968245,
-    longitude: -48.67979172336716,
+    latitude: -27.639797751605755,
+    longitude: -48.667749560555094,
     radius: 100 // metros
 };
 
