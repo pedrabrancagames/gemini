@@ -243,7 +243,6 @@ function spawnGhost(userCoords) {
     const y = 0; // Altura fixa acima do chão
 
     ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostSpawnGPS.latitude}; longitude: ${ghostSpawnGPS.longitude};`);
-    ghostEntity.setAttribute('position', `0 ${y} 0`); // Define a posição local para a altura, gps-entity-place ajustará o resto.
     ghostEntity.setAttribute('visible', 'true');
     isGhostSpawned = true;
     messageContainer.textContent = `Fantasma a ${Math.round(randomDistance)} metros!`;
