@@ -240,7 +240,7 @@ function spawnGhost(userCoords) {
 
     // O componente gps-entity-place no A-Frame cuidará do posicionamento baseado em GPS.
     // Apenas definimos as coordenadas GPS e a altura (y).
-    const y = 0.8; // Altura fixa acima do chão
+    const y = 0; // Altura fixa acima do chão
 
     ghostEntity.setAttribute('gps-entity-place', `latitude: ${ghostSpawnGPS.latitude}; longitude: ${ghostSpawnGPS.longitude};`);
     ghostEntity.setAttribute('position', `0 ${y} 0`); // Define a posição local para a altura, gps-entity-place ajustará o resto.
